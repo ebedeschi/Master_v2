@@ -95,6 +95,16 @@ void sendByteUARTA0(unsigned char byte)
 	UCA0TXBUF = byte;
 }
 
+void initI2CB0()
+{
+	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
+}
+
+void disableI2CB0()
+{
+	P1SEL1 &= ~BIT6 & ~BIT7;                    // I2C pins
+}
+
 /**
  * Initialize UCA1 module in UART mode with boud rate 9600
  */
@@ -299,9 +309,9 @@ void radioReset()
 void gpioLowPower()
 {
 	P1OUT = 0x00;
-	P1OUT = BIT1 + BIT2 + BIT6 + BIT7;
+	P1OUT = BIT1 + BIT2 + BIT3 + BIT6 + BIT7;
 	P1DIR = 0x00;
-	P1DIR = BIT1 + BIT2 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
+	P1DIR = BIT1 + BIT2 + BIT4 + BIT5; // no BIT3
 
 	P2OUT = 0x00;
 	P2OUT = BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
@@ -317,8 +327,8 @@ void gpioLowPower()
 	P4DIR = BIT6 + BIT7;
 
 	PJOUT = 0x00;
-	PJOUT = BIT0 + BIT1 + BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
-	PJDIR = BIT0 + BIT1 + BIT2 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
+	PJOUT = BIT0 + BIT1 + BIT4 + BIT5 + BIT6 + BIT7;
+	PJDIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
 
 	// -------- BOARD SUPERFICE --------
 	// Shout down mode
@@ -342,31 +352,29 @@ void gpioLowPower()
 	P2OUT &= ~BIT3;
 	P2DIR |= BIT3;
 
-	// -------- eink --------
-	// #RST
-	P1OUT &= ~BIT1;
-	P1DIR |= BIT1;
-	// PWM, DCH
-	P2OUT |= BIT4;
-	P2OUT &= ~BIT7;
-	P2DIR &= BIT7;
-	// #DCS, BUSY
-	P3OUT |= BIT0;
-	P3OUT &= ~BIT1;
-	P3DIR |= BIT0;
-	P3DIR &= ~BIT0;
-	// #RST
-	PJOUT |= BIT0;
-	PJDIR |= BIT0;
+//	// -------- eink --------
+//	// #RST
+//	P1OUT &= ~BIT1;
+//	P1DIR |= BIT1;
+//	// PWM, DCH
+//	P2OUT |= BIT4;
+//	P2OUT &= ~BIT7;
+//	P2DIR &= BIT7;
+//	// #DCS, BUSY
+//	P3OUT |= BIT0;
+//	P3OUT &= ~BIT1;
+//	P3DIR |= BIT0;
+//	P3DIR &= ~BIT0;
+//	// #RST
+//	PJOUT |= BIT0;
+//	PJDIR |= BIT0;
 }
 
 void gpioInit()
 {
 	// Configure GPIO
-	P1OUT &= ~BIT0;                           // Clear P1.0 output latch
 	P3DIR |= BIT7;                            // For LED green
 	P3OUT &= ~BIT7;
-	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
 
 //	P2OUT |= BIT3;
 //	P2DIR |= BIT3;
@@ -401,6 +409,18 @@ void gpioInit()
 	P4IE |= BIT2;                  // P4.2 interrupt enabled
 	P4IES &= ~BIT2;                // P4.2 Hi/lo edge
 	P4IFG &= ~BIT2;                // P4.2 IFG cleared
+	// P4.3|-> DIO3
+	P4DIR &= ~BIT3;                // input mode (P4.3), 0
+	P4OUT &= ~BIT3;                // select pull-down mode, 0
+	P4IE |= BIT3;                  // P4.3 interrupt enabled
+	P4IES &= ~BIT3;                // P4.3 Hi/lo edge
+	P4IFG &= ~BIT3;                // P4.3 IFG cleared
+	// P4.4|-> DIO4
+	P4DIR &= ~BIT4;                // input mode (P4.4), 0
+	P4OUT &= ~BIT4;                // select pull-down mode, 0
+	P4IE |= BIT4;                  // P4.4 interrupt enabled
+	P4IES &= ~BIT4;                // P4.4 Hi/lo edge
+	P4IFG &= ~BIT4;                // P4.4 IFG cleared
 }
 
 void enableSlave(u8 slave)
@@ -453,8 +473,8 @@ int main(void) {
 
 	__delay_cycles(1000000);
 
-//	gpioLowPower();
-	gpioInit();
+	gpioLowPower();
+//	gpioInit();
 
 	// Disable the GPIO power-on default high-impedance mode to activate
 	// previously configured port settings
@@ -470,8 +490,8 @@ int main(void) {
 	// Lock CS registers - Why isn't PUC created?
 	CSCTL0_H = 0;
 
-	initSPIA0();
-	//	initUARTA0();
+//	initSPIA0();
+//	initUARTA0();
 //	initUARTA1();
 
 //	P3OUT |= BIT4 + BIT5 + BIT6;
@@ -492,13 +512,15 @@ int main(void) {
 
 		// ***** STAND-ALONE - START *****
 
-    	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
+    	initI2CB0();
 		// Read Temperature
 		SHT21ReadTemperature();
 		g_temp = g_temp;
+		disableI2CB0();
 
-//    	gpioInit();
-//    	initSPIA0();
+
+    	gpioInit();
+    	initSPIA0();
     	radioON();
     	radioInit();
 
@@ -514,7 +536,13 @@ int main(void) {
     	P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 
     	radioOFF();
+    	disableSPIA0();
     	gpioLowPower();
+
+//		// Inizializzazione del timer
+//		TA0CCTL0 = CCIE;                          // TACCR0 interrupt enabled
+//		TA0CCR0 = 65535 - 1;
+//		TA0CTL = TASSEL_2 + MC_2;                 // SMCLK, continuous mode
 
     	__bis_SR_register(LPM3_bits);
 
@@ -640,7 +668,7 @@ __interrupt void Timer0_A0_ISR(void)
 		 	c_timeout=0;
 		 	timeout_slave = 1;
 		 	if(ok_slave == 0)
-		 		__bic_SR_register_on_exit(LPM0_bits); 	// Exit LPM3
+		 		__bic_SR_register_on_exit(LPM3_bits); 	// Exit LPM3
 
 	}
 }
