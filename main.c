@@ -311,7 +311,7 @@ void radioReset()
 	__delay_cycles(5000);
 }
 
-void gpioLowPower()
+void initGPIO()
 {
 
 	// -------- BOARD STAND ALONE - START --------
@@ -427,27 +427,35 @@ void gpioLowPower()
 //	P2DIR |= BIT3;
 }
 
-void gpioInit()
+void setReceiveRS485()
 {
-	// Configure GPIO
+	// Normal mode - Receive
+	P3DIR |= BIT3;					// 3.2 = DE, 3.3 = RE
+	P3OUT &= ~BIT3;					// DE hight-impedence, !RE enable low
+}
+
+void setShoutDownModeRS485()
+{
+	// Shout down mode
+	P3OUT &= ~BIT2;					// DE enable low
+	P3OUT |= BIT3;					// !RE enable hight
+	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
+}
+
+void initLED()
+{
 	P3DIR |= BIT7;                            // For LED green
 	P3OUT &= ~BIT7;
 
 //	P2OUT |= BIT3;
 //	P2DIR |= BIT3;
 
-	// Normal mode - Receive
-	P3DIR |= BIT3;					// 3.2 = DE, 3.3 = RE
-	P3OUT &= ~BIT3;					// DE hight-impedence, !RE enable low
-
-	// Shout down mode
-//	P3OUT &= ~BIT2;					// DE enable low
-//	P3OUT |= BIT3;					// !RE enable hight
-//	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
-
 //	P4DIR |= BIT6 + BIT7;			// 4.6 = TXEnable, 4.7 = RXEnable
 //	P4OUT |= BIT6;					// TXEnable hight, RXEnable low
+}
 
+void initRadioGPIO()
+{
 	// *** Da vedere perchè a volte i DIO danno dei problemi ***
 	// P4.0|-> DIO0
 	P4DIR &= ~BIT0;                // input mode (P4.0), 0
@@ -564,9 +572,9 @@ int main(void) {
 
 //	__delay_cycles(1000000);
 
-	gpioLowPower();
-	gpioInit();
-
+	initGPIO();
+	initRadioGPIO();
+	setShoutDownModeRS485();
 
 	//------ MCLK -------
 //	// Disable the GPIO power-on default high-impedance mode to activate
@@ -603,8 +611,8 @@ int main(void) {
 
 	initVcc_Rs485();
 
-	gpioLowPower();
-	__bis_SR_register(LPM3_bits);
+//	gpioLowPower();
+//	__bis_SR_register(LPM3_bits);
 
 //	// Enable interrupts
 //	__bis_SR_register(GIE);
@@ -669,9 +677,9 @@ int main(void) {
 		for(s=1; s<=1; s++)
 		{
 
-			P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//			P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 
-//			gpioInit();
+			setReceiveRS485();
 			memset(buffer, 0, BUFFER_LENGHT);
 			memset(packet, 0, PACKET_LENGHT);
 //			__bis_SR_register(GIE);
@@ -684,7 +692,7 @@ int main(void) {
 			if(timeout_slave == 0 && ok_slave == 1)
 			{
 
-				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 
 
 //				initSPIA0();
@@ -724,7 +732,7 @@ int main(void) {
 
 		}
 
-//		gpioLowPower();
+		setShoutDownModeRS485();
 		startRTC();
     	__bis_SR_register(LPM3_bits + GIE);
 
