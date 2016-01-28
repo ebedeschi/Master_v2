@@ -52,7 +52,7 @@
 #define BUFFER_LENGHT	40
 #define MAXSLAVE	3
 #define TIMEOUTSLAVE	150
-#define RTCSECONDS	60
+#define RTCSECONDS	20
 
 	Modem_Config1 Modem_Config1_Struct;
 	Modem_Config2 Modem_Config2_Struct;
@@ -287,14 +287,17 @@ void radioInit()
 void radioON()
 {
 	P1OUT |= BIT2;
+	PJOUT |= BIT2; // Errore P1.2 - PJ.2
 	P1DIR |= BIT2;
 	P1OUT &= ~BIT2;
+	PJOUT &= ~BIT2; // Errore P1.2 - PJ.2
 	__delay_cycles(5000);
 }
 
 void radioOFF()
 {
 	P1OUT |= BIT2;
+	PJOUT |= BIT2; // Errore P1.2 - PJ.2
 	P1DIR |= BIT2;
 	__delay_cycles(5000);
 }
@@ -310,18 +313,86 @@ void radioReset()
 
 void gpioLowPower()
 {
+
+	// -------- BOARD STAND ALONE - START --------
+//	P1OUT = 0x00;
+//	P1OUT = BIT1 + BIT2 + BIT3 + BIT6 + BIT7;
+//	P1DIR = 0x00;
+//	P1DIR = BIT1 + BIT2 + BIT4 + BIT5; // no BIT3
+//
+//	P2OUT = 0x00;
+//	P2OUT = BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
+//	P2DIR = 0x00;
+//	P2DIR = BIT0 + BIT1 + BIT2 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
+//
+//	P3OUT = 0xFF;
+//	P3DIR = 0xFF;
+//
+//	P4OUT = 0x00;
+//	P4OUT = BIT6 + BIT7;
+//	P4DIR = 0x00;
+//	P4DIR = BIT6 + BIT7;
+//
+//	PJOUT = 0x00;
+//	PJOUT = BIT0 + BIT1 + BIT4 + BIT5 + BIT6 + BIT7;
+//	PJDIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
+//
+//	// Shout down mode
+//	P3OUT &= ~BIT2;					// DE enable low
+//	P3OUT |= BIT3;					// !RE enable hight
+//	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
+//
+//	// LED power off
+//	P3OUT &= ~BIT7;
+//	P3DIR |= BIT7;
+//
+//	// Radio off
+////	P1OUT |= BIT2;
+////	P1DIR |= BIT2;
+//
+//	// ADCEN off
+//	P2OUT |= BIT2;
+//	P2DIR |= BIT2;
+//
+//	// ADC level low
+//	P2OUT &= ~BIT3;
+//	P2DIR |= BIT3;
+//
+////	// -------- eink --------
+////	// #RST
+////	P1OUT &= ~BIT1;
+////	P1DIR |= BIT1;
+////	// PWM, DCH
+////	P2OUT |= BIT4;
+////	P2OUT &= ~BIT7;
+////	P2DIR &= BIT7;
+////	// #DCS, BUSY
+////	P3OUT |= BIT0;
+////	P3OUT &= ~BIT1;
+////	P3DIR |= BIT0;
+////	P3DIR &= ~BIT0;
+////	// #RST
+////	PJOUT |= BIT0;
+////	PJDIR |= BIT0;
+
+	// -------- BOARD STAND ALONE - STOP --------
+
+	// -------- BOARD SUPERFICE - START --------
+
 	P1OUT = 0x00;
 	P1OUT = BIT1 + BIT2 + BIT3 + BIT6 + BIT7;
 	P1DIR = 0x00;
-	P1DIR = BIT1 + BIT2 + BIT4 + BIT5; // no BIT3
+	P1DIR = BIT1 + BIT2 + BIT4 + BIT5; // no BIT3, no BIT1
 
 	P2OUT = 0x00;
-	P2OUT = BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
+	P2OUT = BIT4 + BIT5 + BIT6;
 	P2DIR = 0x00;
-	P2DIR = BIT0 + BIT1 + BIT2 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
+	P2DIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6;
 
-	P3OUT = 0xFF;
-	P3DIR = 0xFF;
+	P3OUT = 0x00;
+	P3OUT = BIT2 + BIT3 + BIT7;
+	P3DIR = 0x00;
+	P3DIR = BIT2 + BIT3 + BIT7;
 
 	P4OUT = 0x00;
 	P4OUT = BIT6 + BIT7;
@@ -329,8 +400,9 @@ void gpioLowPower()
 	P4DIR = BIT6 + BIT7;
 
 	PJOUT = 0x00;
-	PJOUT = BIT0 + BIT1 + BIT4 + BIT5 + BIT6 + BIT7;
+	PJOUT = BIT0 + BIT1 + BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
 	PJDIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
+
 
 	// -------- BOARD SUPERFICE --------
 	// Shout down mode
@@ -346,30 +418,13 @@ void gpioLowPower()
 //	P1OUT |= BIT2;
 //	P1DIR |= BIT2;
 
-	// ADCEN off
-	P2OUT |= BIT2;
-	P2DIR |= BIT2;
+//	// ADCEN off
+//	P2OUT |= BIT2;
+//	P2DIR |= BIT2;
 
-	// ADC level low
-	P2OUT &= ~BIT3;
-	P2DIR |= BIT3;
-
-//	// -------- eink --------
-//	// #RST
-//	P1OUT &= ~BIT1;
-//	P1DIR |= BIT1;
-//	// PWM, DCH
-//	P2OUT |= BIT4;
-//	P2OUT &= ~BIT7;
-//	P2DIR &= BIT7;
-//	// #DCS, BUSY
-//	P3OUT |= BIT0;
-//	P3OUT &= ~BIT1;
-//	P3DIR |= BIT0;
-//	P3DIR &= ~BIT0;
-//	// #RST
-//	PJOUT |= BIT0;
-//	PJDIR |= BIT0;
+//	// ADC level low
+//	P2OUT &= ~BIT3;
+//	P2DIR |= BIT3;
 }
 
 void gpioInit()
@@ -381,18 +436,19 @@ void gpioInit()
 //	P2OUT |= BIT3;
 //	P2DIR |= BIT3;
 
-//	// Normal mode - Receive
-//	P3DIR |= BIT3;					// 3.2 = DE, 3.3 = RE
-//	P3OUT &= ~BIT3;					// DE hight-impedence, !RE enable low
+	// Normal mode - Receive
+	P3DIR |= BIT3;					// 3.2 = DE, 3.3 = RE
+	P3OUT &= ~BIT3;					// DE hight-impedence, !RE enable low
 
 	// Shout down mode
-	P3OUT &= ~BIT2;					// DE enable low
-	P3OUT |= BIT3;					// !RE enable hight
-	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
+//	P3OUT &= ~BIT2;					// DE enable low
+//	P3OUT |= BIT3;					// !RE enable hight
+//	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
 
 //	P4DIR |= BIT6 + BIT7;			// 4.6 = TXEnable, 4.7 = RXEnable
 //	P4OUT |= BIT6;					// TXEnable hight, RXEnable low
 
+	// *** Da vedere perchè a volte i DIO danno dei problemi ***
 	// P4.0|-> DIO0
 	P4DIR &= ~BIT0;                // input mode (P4.0), 0
 	P4OUT &= ~BIT0;                // select pull-down mode, 0
@@ -411,18 +467,6 @@ void gpioInit()
 	P4IE |= BIT2;                  // P4.2 interrupt enabled
 	P4IES &= ~BIT2;                // P4.2 Hi/lo edge
 	P4IFG &= ~BIT2;                // P4.2 IFG cleared
-	// P4.3|-> DIO3
-	P4DIR &= ~BIT3;                // input mode (P4.3), 0
-	P4OUT &= ~BIT3;                // select pull-down mode, 0
-	P4IE |= BIT3;                  // P4.3 interrupt enabled
-	P4IES &= ~BIT3;                // P4.3 Hi/lo edge
-	P4IFG &= ~BIT3;                // P4.3 IFG cleared
-	// P4.4|-> DIO4
-	P4DIR &= ~BIT4;                // input mode (P4.4), 0
-	P4OUT &= ~BIT4;                // select pull-down mode, 0
-	P4IE |= BIT4;                  // P4.4 interrupt enabled
-	P4IES &= ~BIT4;                // P4.4 Hi/lo edge
-	P4IFG &= ~BIT4;                // P4.4 IFG cleared
 }
 
 void enableSlave(u8 slave)
@@ -496,6 +540,18 @@ void stopRTC()
 	 RTCCTL01 |= RTCHOLD;                 // Stop RTC
 }
 
+void initVcc_Rs485()
+{
+		P3OUT |= BIT4 + BIT5 + BIT6;
+		P3DIR |= BIT4 + BIT5 + BIT6;
+//		P3OUT &= ~BIT4;
+//		P3OUT &= ~BIT5;
+//		P3OUT &= ~BIT6;
+		P3OUT |= BIT4;
+		P3OUT |= BIT5;
+		P3OUT |= BIT6;
+}
+
 char packet[PACKET_LENGHT+1] = {'C','i','a','o','M','o','n','d','o'};
 char buffer[BUFFER_LENGHT+1];
 int i=0, c=0;
@@ -509,6 +565,7 @@ int main(void) {
 //	__delay_cycles(1000000);
 
 	gpioLowPower();
+	gpioInit();
 
 
 	//------ MCLK -------
@@ -542,17 +599,12 @@ int main(void) {
 
 //	initSPIA0();
 //	initUARTA0();
-//	initUARTA1();
+	initUARTA1();
 
-//	P3OUT |= BIT4 + BIT5 + BIT6;
-//	P3DIR |= BIT4 + BIT5 + BIT6;
-//	P3OUT |= BIT4;
-//	P3OUT |= BIT5;
-//	P3OUT |= BIT6;
-//	P3OUT &= ~BIT4;
-//	P3OUT &= ~BIT5;
-//	P3OUT &= ~BIT6;
+	initVcc_Rs485();
 
+	gpioLowPower();
+	__bis_SR_register(LPM3_bits);
 
 //	// Enable interrupts
 //	__bis_SR_register(GIE);
@@ -561,115 +613,124 @@ int main(void) {
 	stopRTC();
 	second = RTCSECONDS - 10;
 
+
     for(;;) {
 
 		// ***** STAND-ALONE - START *****
+//
+//    	stopRTC();
+//
+//    	initI2CB0();
+//		// Read Temperature
+//		SHT21ReadTemperature();
+//		g_temp = g_temp;
+//		disableI2CB0();
+//
+//		// random start delay for next
+//		int start = ((float)g_temp - (int)g_temp) * 1000;
+//		start &= 0x07;
+//		if(start<0 || start >9)
+//			second = 0;
+//		else
+//			second+= start;
+////		start = 0;
+//
+//    	gpioInit();
+//    	initSPIA0();
+//    	radioON();
+//    	radioInit();
+//
+//		packet[0]='\0';
+//		sprintf(packet, "T4:%.2f:%d:%d", g_temp, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
+//		//		sprintf(packet, "T3:%.2f", g_temp);
+//		PayLoadLenghtSet_Value=strlen(packet);
+//		Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
+//		P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//		Packet_Tx(PayLoadLenghtSet_Value, packet);
+//    	count_tx++;
+//
+//    	__bis_SR_register(LPM0_bits + GIE);
+//    	P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//
+//    	radioOFF();
+//    	disableSPIA0();
+//    	gpioLowPower();
+//
+//    	startRTC();
+//    	__bis_SR_register(LPM3_bits + GIE);
+    	// ***** STAND-ALONE - FINE *****
+
+
+
+		// ***** BOARD SUPERFICE - START *****
 
     	stopRTC();
 
-    	initI2CB0();
-		// Read Temperature
-		SHT21ReadTemperature();
-		g_temp = g_temp;
-		disableI2CB0();
+		for(s=1; s<=1; s++)
+		{
 
-		// random start delay for next
-		int start = ((float)g_temp - (int)g_temp) * 1000;
-		start &= 0x07;
-		if(start<0 || start >9)
-			second = 0;
-		else
-			second+= start;
-//		start = 0;
+			P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 
-    	gpioInit();
-    	initSPIA0();
-    	radioON();
-    	radioInit();
+//			gpioInit();
+			memset(buffer, 0, BUFFER_LENGHT);
+			memset(packet, 0, PACKET_LENGHT);
+//			__bis_SR_register(GIE);
+			enableSlave(s);
+			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
+			disableSlave(s);
 
-		packet[0]='\0';
-		sprintf(packet, "T4:%.2f:%d:%d", g_temp, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
-		//		sprintf(packet, "T3:%.2f", g_temp);
-		PayLoadLenghtSet_Value=strlen(packet);
-		Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
-		P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-		Packet_Tx(PayLoadLenghtSet_Value, packet);
-    	count_tx++;
 
-    	__bis_SR_register(LPM0_bits + GIE);
-    	P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+			// No timeout. Ricevuto dato da Slave.
+			if(timeout_slave == 0 && ok_slave == 1)
+			{
 
-    	radioOFF();
-    	disableSPIA0();
-    	gpioLowPower();
+				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 
-    	startRTC();
+
+//				initSPIA0();
+//				radioON();
+//				radioInit();
+//
+//				packet[0]='\0';
+//				sprintf(packet, "%s:%d:%d", buffer, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
+//				PayLoadLenghtSet_Value=strlen(packet);
+//				Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
+//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//				Packet_Tx(PayLoadLenghtSet_Value, packet);
+//				count_tx++;
+//
+//				__bis_SR_register(LPM0_bits + GIE);
+//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//
+//				radioOFF();
+//				disableSPIA0();
+
+
+//				for(i=0;i<strlen(buffer);i++)
+//				{
+//					sendByteUARTA0(buffer[i]);
+//				}
+//				sendByteUARTA0('\n');
+			}
+			else
+			{
+//				sprintf(buffer, "Timeout\n");
+//				for(i=0;i<strlen(buffer);i++)
+//				{
+//					sendByteUARTA0(buffer[i]);
+//				}
+//				sendByteUARTA0('\n');
+			}
+
+		}
+
+//		gpioLowPower();
+		startRTC();
     	__bis_SR_register(LPM3_bits + GIE);
 
-		// ***** STAND-ALONE - FINE *****
+//		 ***** BOARD SUPERFICE - FINE *****
 
-		// ***** BOARD SUPERFICE - START *****
-//		for(s=1; s<=3; s++)
-//		{
-//
-//			memset(buffer, 0, BUFFER_LENGHT);
-//			memset(packet, 0, PACKET_LENGHT);
-//			__bis_SR_register(GIE);
-//			enableSlave(s);
-//			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
-//			disableSlave(s);
-//
-//			// No timeout. Ricevuto dato da Slave.
-//			if(timeout_slave == 0 && ok_slave == 1)
-//			{
-////				radioON();
-////				radioInit();
-////
-////				packet[0]='\0';
-////				sprintf(packet, "%s:%d:%d", buffer, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
-////				PayLoadLenghtSet_Value=strlen(packet);
-////				Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
-////
-////		//		for(i=strlen(packet);i<PayLoadLenghtSet_Value;i++)
-////		//			packet[i]=':';
-////		//		packet[PayLoadLenghtSet_Value]='\0';
-////				 P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-////				Packet_Tx(PayLoadLenghtSet_Value, packet);
-////				count_tx++;
-////
-////				__bis_SR_register(LPM0_bits + GIE);
-////				 P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-////
-////				radioOFF();
-//
-//
-////				for(i=0;i<strlen(buffer);i++)
-////				{
-////					sendByteUARTA0(buffer[i]);
-////				}
-////				sendByteUARTA0('\n');
-//			}
-//			else
-//			{
-////				sprintf(buffer, "Timeout\n");
-////				for(i=0;i<strlen(buffer);i++)
-////				{
-////					sendByteUARTA0(buffer[i]);
-////				}
-////				sendByteUARTA0('\n');
-//			}
-//		}
-////    	// Inizializzazione del timer
-////    	TA0CCTL0 = CCIE;                          // TACCR0 interrupt enabled
-////    	TA0CCR0 = 65535 - 1;
-////    	TA0CTL = TASSEL_2 + MC_2;                 // SMCLK, continuous mode
-//
-////    	__bis_SR_register(LPM0_bits | GIE);
-//
-////		 ***** BOARD SUPERFICE - FINE *****
-//
-//    	__delay_cycles(2000000);
-//    	__delay_cycles(2000000);
+
 
     }
 
