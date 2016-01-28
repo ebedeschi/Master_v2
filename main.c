@@ -48,7 +48,7 @@
 #include "sx1276Regs-LoRa.h"
 #include "shtLib.h"
 
-#define PACKET_LENGHT	16
+#define PACKET_LENGHT	40
 #define BUFFER_LENGHT	40
 #define MAXSLAVE	3
 #define TIMEOUTSLAVE	150
@@ -65,10 +65,8 @@
 int Packet_Snr,Packet_Rssi,Rssi_Value,Packet_Count,Modem_Status;
 
 unsigned char ch;
-u8 slave = 1;
 u8 timeout_slave = 0;
 u8 ok_slave = 0;
-u8 s = 1;
 unsigned long second = 0;
 
 /**
@@ -125,6 +123,13 @@ void initUARTA1()
 	UCA1MCTLW |= UCBRS0 + UCBRF_8 + UCOS16;
 	UCA1CTLW0 &= ~UCSWRST;                    // Initialize eUSCI
 	UCA1IE |= UCRXIE;                         // Enable USCI_A1 RX interrupt
+}
+
+void disableUART1()
+{
+	P2SEL1 &= ~BIT5 & ~BIT6;                    // USCI_A1 UART operation
+	P2OUT = BIT5 | BIT6;
+	P2DIR = BIT5 | BIT6;
 }
 
 void sendByteUARTA1(unsigned char byte)
@@ -379,36 +384,32 @@ void initGPIO()
 
 	// -------- BOARD SUPERFICE - START --------
 
-	P1OUT = 0x00;
-	P1OUT = BIT1 + BIT2 + BIT3 + BIT6 + BIT7;
-	P1DIR = 0x00;
-	P1DIR = BIT1 + BIT2 + BIT4 + BIT5; // no BIT3, no BIT1
-
-	P2OUT = 0x00;
-	P2OUT = BIT4 + BIT5 + BIT6;
-	P2DIR = 0x00;
-	P2DIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6;
-
-	P3OUT = 0x00;
-	P3OUT = BIT2 + BIT3 + BIT7;
-	P3DIR = 0x00;
-	P3DIR = BIT2 + BIT3 + BIT7;
-
-	P4OUT = 0x00;
-	P4OUT = BIT6 + BIT7;
-	P4DIR = 0x00;
-	P4DIR = BIT6 + BIT7;
-
-	PJOUT = 0x00;
-	PJOUT = BIT0 + BIT1 + BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
-	PJDIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
+//	P1OUT = 0x00;
+//	P1OUT = BIT1 + BIT2 + BIT3 + BIT6 + BIT7;
+//	P1DIR = 0x00;
+//	P1DIR = BIT1 + BIT2 + BIT4 + BIT5; // no BIT3, no BIT1
+//
+//	P2OUT = 0x00;
+//	P2OUT = BIT4 + BIT5 + BIT6;
+//	P2DIR = 0x00;
+//	P2DIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6;
+//
+//	P3OUT = 0x00;
+//	P3OUT = BIT2 + BIT3 + BIT7;
+//	P3DIR = 0x00;
+//	P3DIR = BIT2 + BIT3 + BIT7;
+//
+//	P4OUT = 0x00;
+//	P4OUT = BIT6 + BIT7;
+//	P4DIR = 0x00;
+//	P4DIR = BIT6 + BIT7;
+//
+//	PJOUT = 0x00;
+//	PJOUT = BIT0 + BIT1 + BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
+//	PJDIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
 
 
 	// -------- BOARD SUPERFICE --------
-	// Shout down mode
-	P3OUT &= ~BIT2;					// DE enable low
-	P3OUT |= BIT3;					// !RE enable hight
-	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
 
 	// LED power off
 	P3OUT &= ~BIT7;
@@ -477,7 +478,7 @@ void initRadioGPIO()
 	P4IFG &= ~BIT2;                // P4.2 IFG cleared
 }
 
-void enableSlave(u8 slave)
+void enableSlave(int slave)
 {
 	timeout_slave = 0;
 	ok_slave = 0;
@@ -485,34 +486,35 @@ void enableSlave(u8 slave)
 	{
 		P3OUT &= ~BIT4;
 	}
-	else if(slave == 2)
+	if(slave == 2)
 	{
 		P3OUT &= ~BIT5;
 	}
-	else if(slave == 3)
+	if(slave == 3)
 	{
 		P3OUT &= ~BIT6;
 	}
-	// Inizializzazione del timer per timeout
-	TA0CCTL0 = CCIE;                    // TACCR0 interrupt enabled
-	TA0CCR0 = 62500 - 1;
-	TA0CTL = TASSEL__SMCLK | MC__CONTINOUS;   // SMCLK, continuous mode
+//	// Inizializzazione del timer per timeout
+//	TA0CCTL0 = CCIE;                    // TACCR0 interrupt enabled
+//	TA0CCR0 = 62500 - 1;
+//	TA0CTL = TASSEL__ACLK | MC__CONTINUOUS;   // SMCLK, continuous mode
 }
 
-void disableSlave(u8 slave)
+void disableSlave(int slave)
 {
 	if(slave == 1)
 	{
 		P3OUT |= BIT4;
 	}
-	else if(slave == 2)
+	if(slave == 2)
 	{
 		P3OUT |= BIT5;
 	}
-	else if(slave == 3)
+	if(slave == 3)
 	{
 		P3OUT |= BIT6;
 	}
+//	TA0CTL = MC__STOP;
 }
 
 void initRTC()
@@ -548,7 +550,7 @@ void stopRTC()
 	 RTCCTL01 |= RTCHOLD;                 // Stop RTC
 }
 
-void initVcc_Rs485()
+void initVccRS485()
 {
 		P3OUT |= BIT4 + BIT5 + BIT6;
 		P3DIR |= BIT4 + BIT5 + BIT6;
@@ -560,12 +562,19 @@ void initVcc_Rs485()
 		P3OUT |= BIT6;
 }
 
+void disableVccRS485()
+{
+	P3DIR &= ~BIT4 + ~BIT5 + ~BIT6;
+	P3OUT &= ~BIT4 + ~BIT5 + ~BIT6;
+}
+
 char packet[PACKET_LENGHT+1] = {'C','i','a','o','M','o','n','d','o'};
 char buffer[BUFFER_LENGHT+1];
 int i=0, c=0;
 unsigned long count_tx=0;
 unsigned long count_tx_irq=0;
 unsigned long c_timeout=0;
+
 
 int main(void) {
 	WDTCTL = WDTPW | WDTHOLD;       // Stop WDT
@@ -576,43 +585,43 @@ int main(void) {
 	initRadioGPIO();
 	setShoutDownModeRS485();
 
-	//------ MCLK -------
-//	// Disable the GPIO power-on default high-impedance mode to activate
-//	// previously configured port settings
-//	PM5CTL0 &= ~LOCKLPM5;
-//	// Clock setup
-//	CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
-//	CSCTL1 = DCOFSEL_0 | DCORSEL;             // Set DCO to 1MHz
-//	CSCTL2 = SELA__VLOCLK | SELS__DCOCLK | SELM__DCOCLK; 	// Set MCLK = DCO
-//	CSCTL3 = DIVA__1 | DIVS__1 | DIVM__1;     // Set all dividers to 1
-//	CSCTL4 &= ~LFXTOFF;						// Turn on LFXT
-//	// Lock CS registers - Why isn't PUC created?
-//	CSCTL0_H = 0;
+	P3OUT |= BIT7;                      // Toggle P3.7 using exclusive-OR
 
-	//------ ACLK -------
-	 PJSEL0 = BIT4 | BIT5;                   // Initialize LFXT pins
+
+	//------ MCLK -------
 	// Disable the GPIO power-on default high-impedance mode to activate
 	// previously configured port settings
 	PM5CTL0 &= ~LOCKLPM5;
+	// Clock setup
+	CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
+	CSCTL1 = DCOFSEL_0 | DCORSEL;             // Set DCO to 1MHz
+	CSCTL2 = SELA__VLOCLK | SELS__DCOCLK | SELM__DCOCLK; 	// Set MCLK = DCO
+	CSCTL3 = DIVA__1 | DIVS__1 | DIVM__1;     // Set all dividers to 1
+	CSCTL4 &= ~LFXTOFF;						// Turn on LFXT
+	// Lock CS registers - Why isn't PUC created?
+	CSCTL0_H = 0;
 
-	// Configure LFXT 32kHz crystal
-	CSCTL0_H = CSKEY >> 8;                  // Unlock CS registers
-	CSCTL4 &= ~LFXTOFF;                     // Enable LFXT
-	do
-	{
-	  CSCTL5 &= ~LFXTOFFG;                  // Clear LFXT fault flag
-	  SFRIFG1 &= ~OFIFG;
-	} while (SFRIFG1 & OFIFG);              // Test oscillator fault flag
-	CSCTL0_H = 0;                           // Lock CS registers
+	//------ ACLK -------
+//	 PJSEL0 = BIT4 | BIT5;                   // Initialize LFXT pins
+//	// Disable the GPIO power-on default high-impedance mode to activate
+//	// previously configured port settings
+//	PM5CTL0 &= ~LOCKLPM5;
+//
+//	// Configure LFXT 32kHz crystal
+//	CSCTL0_H = CSKEY >> 8;                  // Unlock CS registers
+//	CSCTL4 &= ~LFXTOFF;                     // Enable LFXT
+//	do
+//	{
+//	  CSCTL5 &= ~LFXTOFFG;                  // Clear LFXT fault flag
+//	  SFRIFG1 &= ~OFIFG;
+//	} while (SFRIFG1 & OFIFG);              // Test oscillator fault flag
+//	CSCTL0_H = 0;                           // Lock CS registers
 
 //	initSPIA0();
-//	initUARTA0();
+	initUARTA0();
 	initUARTA1();
 
-	initVcc_Rs485();
-
-//	gpioLowPower();
-//	__bis_SR_register(LPM3_bits);
+	initVccRS485();
 
 //	// Enable interrupts
 //	__bis_SR_register(GIE);
@@ -621,6 +630,18 @@ int main(void) {
 	stopRTC();
 	second = RTCSECONDS - 10;
 
+	sprintf(packet, "Init \n");
+	for(i=0;i<strlen(packet);i++)
+	{
+		sendByteUARTA0(packet[i]);
+	}
+
+//	startRTC();
+//	setReceiveRS485();
+//	disableVccRS485();
+//	setShoutDownModeRS485();
+//	disableUART1();
+//	__bis_SR_register(LPM3_bits);
 
     for(;;) {
 
@@ -671,21 +692,42 @@ int main(void) {
 
 
 		// ***** BOARD SUPERFICE - START *****
+//    	stopRTC();
 
-    	stopRTC();
+//    	sprintf(packet, "Before\n");
+//    	for(i=0;i<strlen(packet);i++)
+//    	{
+//    		sendByteUARTA0(packet[i]);
+//    	}
 
-		for(s=1; s<=1; s++)
+    	int s = 1;
+    	for(s=1;s<=3;s++)
 		{
 
-//			P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//    		sprintf(packet, "After\n");
+//    		for(i=0;i<strlen(packet);i++)
+//    		{
+//    			sendByteUARTA0(packet[i]);
+//    		}
 
-			setReceiveRS485();
 			memset(buffer, 0, BUFFER_LENGHT);
 			memset(packet, 0, PACKET_LENGHT);
-//			__bis_SR_register(GIE);
+			initUARTA1();
+			setReceiveRS485();
+			initVccRS485();
+			__bis_SR_register(GIE);
 			enableSlave(s);
 			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
 			disableSlave(s);
+			disableVccRS485();
+			setShoutDownModeRS485();
+			disableUART1();
+
+			sprintf(packet, "%d %d %s\n", c++, s, buffer);
+			for(i=0;i<strlen(packet);i++)
+			{
+				sendByteUARTA0(packet[i]);
+			}
 
 
 			// No timeout. Ricevuto dato da Slave.
@@ -730,11 +772,29 @@ int main(void) {
 //				sendByteUARTA0('\n');
 			}
 
+//    		sprintf(packet, "End 1\n");
+//    		for(i=0;i<strlen(packet);i++)
+//    		{
+//    			sendByteUARTA0(packet[i]);
+//    		}
+
+			__delay_cycles(1000000);
+
+//    		sprintf(packet, "End 2\n");
+//    		for(i=0;i<strlen(packet);i++)
+//    		{
+//    			sendByteUARTA0(packet[i]);
+//    		}
+
 		}
 
-		setShoutDownModeRS485();
-		startRTC();
-    	__bis_SR_register(LPM3_bits + GIE);
+    	__delay_cycles(1000000);
+    	__delay_cycles(1000000);
+    	__delay_cycles(1000000);
+    	__delay_cycles(1000000);
+
+//		startRTC();
+//    	__bis_SR_register(LPM3_bits + GIE);
 
 //		 ***** BOARD SUPERFICE - FINE *****
 
@@ -821,13 +881,13 @@ __interrupt void USCI_A1_ISR(void)
 //	P3OUT ^= BIT7;
 	ch = UCA1RXBUF;
 	if(ch == 'T')
-		c=0;
-    buffer[c++] = ch;
+		cu=0;
+    buffer[cu++] = ch;
     UCA1IFG &= ~UCRXIFG;
     if (ch == '\n') // '\n' received?
     {
-    	buffer[c-1] = '\0';
-    	c=0;
+    	buffer[cu-1] = '\0';
+    	cu=0;
     	ok_slave = 1;
 	    __bic_SR_register_on_exit(LPM0_bits);
     }
