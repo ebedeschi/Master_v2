@@ -374,13 +374,13 @@ void gpioLowPower()
 void gpioInit()
 {
 	// Configure GPIO
-	P1OUT &= ~BIT0;                           // Clear P1.0 output latch
+//	P1OUT &= ~BIT0;                           // Clear P1.0 output latch
 	P3DIR |= BIT7;                            // For LED green
 	P3OUT &= ~BIT7;
-	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
+//	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
 
-	P2OUT |= BIT3;
-	P2DIR |= BIT3;
+//	P2OUT |= BIT3;
+//	P2DIR |= BIT3;
 
 	// Normal mode - Receive
 	P3DIR |= BIT3;					// 3.2 = DE, 3.3 = RE
@@ -391,8 +391,8 @@ void gpioInit()
 //	P3OUT |= BIT3;					// !RE enable hight
 //	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
 
-	P4DIR |= BIT6 + BIT7;			// 4.6 = TXEnable, 4.7 = RXEnable
-	P4OUT |= BIT6;					// TXEnable hight, RXEnable low
+//	P4DIR |= BIT6 + BIT7;			// 4.6 = TXEnable, 4.7 = RXEnable
+//	P4OUT |= BIT6;					// TXEnable hight, RXEnable low
 
 	// P4.0|-> DIO0
 	P4DIR &= ~BIT0;                // input mode (P4.0), 0
@@ -495,7 +495,7 @@ int main(void) {
 
 
 	// Enable interrupts
-	__bis_SR_register(GIE);
+//	__bis_SR_register(GIE);
 
 
     for(;;) {
@@ -522,12 +522,12 @@ int main(void) {
 		// ***** STAND-ALONE - FINE *****
 
 
-		for(s=1; s<=2; s++)
+		for(s=1; s<=1; s++)
 		{
 
 			memset(buffer, 0, BUFFER_LENGHT);
 			memset(packet, 0, PACKET_LENGHT);
-			__bis_SR_register(GIE);
+//			__bis_SR_register(GIE);
 			enableSlave(s);
 			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
 			disableSlave(s);
