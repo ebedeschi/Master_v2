@@ -49,8 +49,9 @@
 #include "shtLib.h"
 
 #define PACKET_LENGHT	16
+#define BUFFER_LENGHT	40
 #define MAXSLAVE	3
-#define TIMEOUTSLAVE	100
+#define TIMEOUTSLAVE	150
 
 	Modem_Config1 Modem_Config1_Struct;
 	Modem_Config2 Modem_Config2_Struct;
@@ -373,13 +374,13 @@ void gpioLowPower()
 void gpioInit()
 {
 	// Configure GPIO
-//	P1OUT &= ~BIT0;                           // Clear P1.0 output latch
+	P1OUT &= ~BIT0;                           // Clear P1.0 output latch
 	P3DIR |= BIT7;                            // For LED green
 	P3OUT &= ~BIT7;
-//	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
+	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
 
-//	P2OUT |= BIT3;
-//	P2DIR |= BIT3;
+	P2OUT |= BIT3;
+	P2DIR |= BIT3;
 
 	// Normal mode - Receive
 	P3DIR |= BIT3;					// 3.2 = DE, 3.3 = RE
@@ -390,8 +391,8 @@ void gpioInit()
 //	P3OUT |= BIT3;					// !RE enable hight
 //	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
 
-//	P4DIR |= BIT6 + BIT7;			// 4.6 = TXEnable, 4.7 = RXEnable
-//	P4OUT |= BIT6;					// TXEnable hight, RXEnable low
+	P4DIR |= BIT6 + BIT7;			// 4.6 = TXEnable, 4.7 = RXEnable
+	P4OUT |= BIT6;					// TXEnable hight, RXEnable low
 
 	// P4.0|-> DIO0
 	P4DIR &= ~BIT0;                // input mode (P4.0), 0
@@ -429,7 +430,7 @@ void enableSlave(u8 slave)
 	}
 	timeout_slave = 0;
 	ok_slave = 0;
-//	// Inizializzazione del timer per timeout
+	// Inizializzazione del timer per timeout
 //	TA0CCTL0 = CCIE;                    // TACCR0 interrupt enabled
 //	TA0CCR0 = 62500 - 1;
 //	TA0CTL = TASSEL__SMCLK | MC__CONTINOUS;   // SMCLK, continuous mode
@@ -452,7 +453,7 @@ void disableSlave(u8 slave)
 }
 
 char packet[PACKET_LENGHT+1] = {'C','i','a','o','M','o','n','d','o'};
-char buffer[40];
+char buffer[BUFFER_LENGHT+1];
 int i=0, c=0;
 unsigned long count_tx=0;
 unsigned long count_tx_irq=0;
@@ -479,7 +480,7 @@ int main(void) {
 	// Lock CS registers - Why isn't PUC created?
 	CSCTL0_H = 0;
 
-	//	initSPIA0();
+//	initSPIA0();
 	initUARTA0();
 	initUARTA1();
 
@@ -494,6 +495,7 @@ int main(void) {
 
 
 	// Enable interrupts
+	__bis_SR_register(GIE);
 
 
     for(;;) {
@@ -519,9 +521,13 @@ int main(void) {
 //    	radioOFF();
 		// ***** STAND-ALONE - FINE *****
 
+
 		for(s=1; s<=2; s++)
 		{
 
+			memset(buffer, 0, BUFFER_LENGHT);
+			memset(packet, 0, PACKET_LENGHT);
+			__bis_SR_register(GIE);
 			enableSlave(s);
 			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
 			disableSlave(s);
@@ -553,7 +559,6 @@ int main(void) {
 					sendByteUARTA0(buffer[i]);
 				}
 				sendByteUARTA0('\n');
-
 			}
 			else
 			{
@@ -564,7 +569,6 @@ int main(void) {
 				}
 				sendByteUARTA0('\n');
 			}
-
 		}
 
 
