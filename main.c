@@ -49,9 +49,8 @@
 #include "shtLib.h"
 
 #define PACKET_LENGHT	16
-#define BUFFER_LENGHT	40
 #define MAXSLAVE	3
-#define TIMEOUTSLAVE	150
+#define TIMEOUTSLAVE	100
 
 	Modem_Config1 Modem_Config1_Struct;
 	Modem_Config2 Modem_Config2_Struct;
@@ -374,13 +373,13 @@ void gpioLowPower()
 void gpioInit()
 {
 	// Configure GPIO
-	P1OUT &= ~BIT0;                           // Clear P1.0 output latch
+//	P1OUT &= ~BIT0;                           // Clear P1.0 output latch
 	P3DIR |= BIT7;                            // For LED green
 	P3OUT &= ~BIT7;
-	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
+//	P1SEL1 |= BIT6 | BIT7;                    // I2C pins
 
-	P2OUT |= BIT3;
-	P2DIR |= BIT3;
+//	P2OUT |= BIT3;
+//	P2DIR |= BIT3;
 
 	// Normal mode - Receive
 	P3DIR |= BIT3;					// 3.2 = DE, 3.3 = RE
@@ -391,8 +390,8 @@ void gpioInit()
 //	P3OUT |= BIT3;					// !RE enable hight
 //	P3DIR |= BIT2 + BIT3;			// 3.2 = DE, 3.3 = RE
 
-	P4DIR |= BIT6 + BIT7;			// 4.6 = TXEnable, 4.7 = RXEnable
-	P4OUT |= BIT6;					// TXEnable hight, RXEnable low
+//	P4DIR |= BIT6 + BIT7;			// 4.6 = TXEnable, 4.7 = RXEnable
+//	P4OUT |= BIT6;					// TXEnable hight, RXEnable low
 
 	// P4.0|-> DIO0
 	P4DIR &= ~BIT0;                // input mode (P4.0), 0
@@ -416,8 +415,6 @@ void gpioInit()
 
 void enableSlave(u8 slave)
 {
-	timeout_slave = 0;
-	ok_slave = 0;
 	if(slave == 1)
 	{
 		P3OUT &= ~BIT4;
@@ -430,7 +427,9 @@ void enableSlave(u8 slave)
 	{
 		P3OUT &= ~BIT6;
 	}
-	// Inizializzazione del timer per timeout
+	timeout_slave = 0;
+	ok_slave = 0;
+//	// Inizializzazione del timer per timeout
 //	TA0CCTL0 = CCIE;                    // TACCR0 interrupt enabled
 //	TA0CCR0 = 62500 - 1;
 //	TA0CTL = TASSEL__SMCLK | MC__CONTINOUS;   // SMCLK, continuous mode
@@ -453,7 +452,7 @@ void disableSlave(u8 slave)
 }
 
 char packet[PACKET_LENGHT+1] = {'C','i','a','o','M','o','n','d','o'};
-char buffer[BUFFER_LENGHT+1];
+char buffer[40];
 int i=0, c=0;
 unsigned long count_tx=0;
 unsigned long count_tx_irq=0;
@@ -480,7 +479,7 @@ int main(void) {
 	// Lock CS registers - Why isn't PUC created?
 	CSCTL0_H = 0;
 
-//	initSPIA0();
+	//	initSPIA0();
 	initUARTA0();
 	initUARTA1();
 
@@ -495,7 +494,6 @@ int main(void) {
 
 
 	// Enable interrupts
-	__bis_SR_register(GIE);
 
 
     for(;;) {
@@ -521,13 +519,9 @@ int main(void) {
 //    	radioOFF();
 		// ***** STAND-ALONE - FINE *****
 
-
 		for(s=1; s<=2; s++)
 		{
 
-			memset(buffer, 0, BUFFER_LENGHT);
-			memset(packet, 0, PACKET_LENGHT);
-			__bis_SR_register(GIE);
 			enableSlave(s);
 			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
 			disableSlave(s);
@@ -546,12 +540,10 @@ int main(void) {
 //		//		for(i=strlen(packet);i<PayLoadLenghtSet_Value;i++)
 //		//			packet[i]=':';
 //		//		packet[PayLoadLenghtSet_Value]='\0';
-//				 P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 //				Packet_Tx(PayLoadLenghtSet_Value, packet);
 //				count_tx++;
 //
-//				__bis_SR_register(LPM0_bits + GIE);
-//				 P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//				__bis_SR_register(LPM0_bits | GIE);
 //
 //				radioOFF();
 
@@ -561,6 +553,7 @@ int main(void) {
 					sendByteUARTA0(buffer[i]);
 				}
 				sendByteUARTA0('\n');
+
 			}
 			else
 			{
@@ -571,6 +564,7 @@ int main(void) {
 				}
 				sendByteUARTA0('\n');
 			}
+
 		}
 
 
@@ -610,7 +604,7 @@ __interrupt void Port_4(void)
 			Send_Data(REG_LR_IRQFLAGS, RFLR_IRQFLAGS_TXDONE);
 			Send_Data(RegIRQFlags, 0x00);
 
-//			 P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+		    P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 		}
 		P4IFG &= ~BIT0;                       // P4.0 IFG cleared
 		break;
