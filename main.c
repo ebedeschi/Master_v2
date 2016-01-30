@@ -52,7 +52,7 @@
 #define BUFFER_LENGHT	40
 #define MAXSLAVE	3
 #define TIMEOUTSLAVE	150
-#define RTCSECONDS	20
+#define RTCSECONDS	60
 
 	Modem_Config1 Modem_Config1_Struct;
 	Modem_Config2 Modem_Config2_Struct;
@@ -384,29 +384,29 @@ void initGPIO()
 
 	// -------- BOARD SUPERFICE - START --------
 
-//	P1OUT = 0x00;
-//	P1OUT = BIT1 + BIT2 + BIT3 + BIT6 + BIT7;
-//	P1DIR = 0x00;
-//	P1DIR = BIT1 + BIT2 + BIT4 + BIT5; // no BIT3, no BIT1
-//
-//	P2OUT = 0x00;
-//	P2OUT = BIT4 + BIT5 + BIT6;
-//	P2DIR = 0x00;
-//	P2DIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6;
-//
-//	P3OUT = 0x00;
-//	P3OUT = BIT2 + BIT3 + BIT7;
-//	P3DIR = 0x00;
-//	P3DIR = BIT2 + BIT3 + BIT7;
-//
-//	P4OUT = 0x00;
-//	P4OUT = BIT6 + BIT7;
-//	P4DIR = 0x00;
-//	P4DIR = BIT6 + BIT7;
-//
-//	PJOUT = 0x00;
-//	PJOUT = BIT0 + BIT1 + BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
-//	PJDIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
+	P1OUT = 0x00;
+	P1OUT = BIT1 + BIT2 + BIT3 + BIT6 + BIT7;
+	P1DIR = 0x00;
+	P1DIR = BIT1 + BIT2 + BIT4 + BIT5; // no BIT3, no BIT1
+
+	P2OUT = 0x00;
+	P2OUT = BIT4 + BIT5 + BIT6;
+	P2DIR = 0x00;
+	P2DIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6;
+
+	P3OUT = 0x00;
+	P3OUT = BIT2 + BIT3 + BIT7;
+	P3DIR = 0x00;
+	P3DIR = BIT2 + BIT3 + BIT7;
+
+	P4OUT = 0x00;
+	P4OUT = BIT6 + BIT7;
+	P4DIR = 0x00;
+	P4DIR = BIT6 + BIT7;
+
+	PJOUT = 0x00;
+	PJOUT = BIT0 + BIT1 + BIT2 + BIT4 + BIT5 + BIT6 + BIT7;
+	PJDIR = BIT0 + BIT1 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7;
 
 
 	// -------- BOARD SUPERFICE --------
@@ -586,37 +586,35 @@ int main(void) {
 	initRadioGPIO();
 	setShoutDownModeRS485();
 
-	P3OUT |= BIT7;                      // Toggle P3.7 using exclusive-OR
-
 
 	//------ MCLK -------
-	// Disable the GPIO power-on default high-impedance mode to activate
-	// previously configured port settings
-	PM5CTL0 &= ~LOCKLPM5;
-	// Clock setup
-	CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
-	CSCTL1 = DCOFSEL_0 | DCORSEL;             // Set DCO to 1MHz
-	CSCTL2 = SELA__VLOCLK | SELS__DCOCLK | SELM__DCOCLK; 	// Set MCLK = DCO
-	CSCTL3 = DIVA__1 | DIVS__1 | DIVM__1;     // Set all dividers to 1
-	CSCTL4 &= ~LFXTOFF;						// Turn on LFXT
-	// Lock CS registers - Why isn't PUC created?
-	CSCTL0_H = 0;
-
-	//------ ACLK -------
-//	 PJSEL0 = BIT4 | BIT5;                   // Initialize LFXT pins
 //	// Disable the GPIO power-on default high-impedance mode to activate
 //	// previously configured port settings
 //	PM5CTL0 &= ~LOCKLPM5;
-//
-//	// Configure LFXT 32kHz crystal
-//	CSCTL0_H = CSKEY >> 8;                  // Unlock CS registers
-//	CSCTL4 &= ~LFXTOFF;                     // Enable LFXT
-//	do
-//	{
-//	  CSCTL5 &= ~LFXTOFFG;                  // Clear LFXT fault flag
-//	  SFRIFG1 &= ~OFIFG;
-//	} while (SFRIFG1 & OFIFG);              // Test oscillator fault flag
-//	CSCTL0_H = 0;                           // Lock CS registers
+//	// Clock setup
+//	CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
+//	CSCTL1 = DCOFSEL_0 | DCORSEL;             // Set DCO to 1MHz
+//	CSCTL2 = SELA__VLOCLK | SELS__DCOCLK | SELM__DCOCLK; 	// Set MCLK = DCO
+//	CSCTL3 = DIVA__1 | DIVS__1 | DIVM__1;     // Set all dividers to 1
+//	CSCTL4 &= ~LFXTOFF;						// Turn on LFXT
+//	// Lock CS registers - Why isn't PUC created?
+//	CSCTL0_H = 0;
+
+	//------ ACLK -------
+	 PJSEL0 = BIT4 | BIT5;                   // Initialize LFXT pins
+	// Disable the GPIO power-on default high-impedance mode to activate
+	// previously configured port settings
+	PM5CTL0 &= ~LOCKLPM5;
+
+	// Configure LFXT 32kHz crystal
+	CSCTL0_H = CSKEY >> 8;                  // Unlock CS registers
+	CSCTL4 &= ~LFXTOFF;                     // Enable LFXT
+	do
+	{
+	  CSCTL5 &= ~LFXTOFFG;                  // Clear LFXT fault flag
+	  SFRIFG1 &= ~OFIFG;
+	} while (SFRIFG1 & OFIFG);              // Test oscillator fault flag
+	CSCTL0_H = 0;                           // Lock CS registers
 
 //	initSPIA0();
 //	initUARTA0();
@@ -631,18 +629,19 @@ int main(void) {
 	stopRTC();
 	second = RTCSECONDS - 10;
 
-//	sprintf(packet, "Init \n");
-//	for(i=0;i<strlen(packet);i++)
-//	{
-//		sendByteUARTA0(packet[i]);
-//	}
-
-//	startRTC();
 //	setReceiveRS485();
+//
 //	disableVccRS485();
 //	setShoutDownModeRS485();
 //	disableUART1();
-//	__bis_SR_register(LPM3_bits);
+//	initSPIA0();
+////	radioON();
+////	radioInit();
+////	radioOFF();
+//	disableSPIA0();
+//
+//	startRTC();
+//	__bis_SR_register(LPM3_bits + GIE);
 
     for(;;) {
 
@@ -693,23 +692,11 @@ int main(void) {
 
 
 		// ***** BOARD SUPERFICE - START *****
-//    	stopRTC();
-
-//    	sprintf(packet, "Before\n");
-//    	for(i=0;i<strlen(packet);i++)
-//    	{
-//    		sendByteUARTA0(packet[i]);
-//    	}
+    	stopRTC();
 
     	int s = 1;
     	for(s=1;s<=3;s++)
 		{
-
-//    		sprintf(packet, "After\n");
-//    		for(i=0;i<strlen(packet);i++)
-//    		{
-//    			sendByteUARTA0(packet[i]);
-//    		}
 
 			memset(buffer, 0, BUFFER_LENGHT);
 			memset(packet, 0, PACKET_LENGHT);
@@ -720,79 +707,49 @@ int main(void) {
 			enableSlave(s);
 			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
 			disableSlave(s);
-//			disableVccRS485();
+			disableVccRS485();
 			setShoutDownModeRS485();
 			disableUART1();
-
-//			sprintf(packet, "%d %d %s\n", c++, s, buffer);
-//			for(i=0;i<strlen(packet);i++)
-//			{
-//				sendByteUARTA0(packet[i]);
-//			}
 
 
 			// No timeout. Ricevuto dato da Slave.
 			if(timeout_slave == 0 && ok_slave == 1)
 			{
 
-//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-
-
 				initSPIA0();
 				radioON();
 				radioInit();
 
 				packet[0]='\0';
-//				sprintf(packet, "%s:%d:%d", buffer, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
-				sprintf(packet, "%s", buffer);
+				sprintf(packet, "%s:%d:%d", buffer, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
+//				sprintf(packet, "%s", buffer);
 				PayLoadLenghtSet_Value=strlen(packet);
 				Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
-				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 				Packet_Tx(PayLoadLenghtSet_Value, packet);
 				count_tx++;
 
 				__bis_SR_register(LPM0_bits + GIE);
-				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 
 				radioOFF();
 				disableSPIA0();
 
-
-//				for(i=0;i<strlen(buffer);i++)
-//				{
-//					sendByteUARTA0(buffer[i]);
-//				}
-//				sendByteUARTA0('\n');
 			}
 			else
 			{
-//				sprintf(buffer, "Timeout\n");
-//				for(i=0;i<strlen(buffer);i++)
-//				{
-//					sendByteUARTA0(buffer[i]);
-//				}
-//				sendByteUARTA0('\n');
+
 			}
-
-//    		sprintf(packet, "End 1\n");
-//    		for(i=0;i<strlen(packet);i++)
-//    		{
-//    			sendByteUARTA0(packet[i]);
-//    		}
-
-			__delay_cycles(100000);
-
-//    		sprintf(packet, "End 2\n");
-//    		for(i=0;i<strlen(packet);i++)
-//    		{
-//    			sendByteUARTA0(packet[i]);
-//    		}
 
 		}
 
 //    	__delay_cycles(1000000);
 //    	__delay_cycles(1000000);
 
+
+//    	disableVccRS485();
+//    	setShoutDownModeRS485();
+//    	disableUART1();
 
 		startRTC();
     	__bis_SR_register(LPM3_bits + GIE);
