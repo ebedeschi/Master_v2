@@ -581,6 +581,7 @@ int main(void) {
 
 //	__delay_cycles(1000000);
 
+	initVccRS485();
 	initGPIO();
 	initRadioGPIO();
 	setShoutDownModeRS485();
@@ -618,10 +619,10 @@ int main(void) {
 //	CSCTL0_H = 0;                           // Lock CS registers
 
 //	initSPIA0();
-	initUARTA0();
-	initUARTA1();
+//	initUARTA0();
+//	initUARTA1();
 
-	initVccRS485();
+
 
 //	// Enable interrupts
 //	__bis_SR_register(GIE);
@@ -630,11 +631,11 @@ int main(void) {
 	stopRTC();
 	second = RTCSECONDS - 10;
 
-	sprintf(packet, "Init \n");
-	for(i=0;i<strlen(packet);i++)
-	{
-		sendByteUARTA0(packet[i]);
-	}
+//	sprintf(packet, "Init \n");
+//	for(i=0;i<strlen(packet);i++)
+//	{
+//		sendByteUARTA0(packet[i]);
+//	}
 
 //	startRTC();
 //	setReceiveRS485();
@@ -715,19 +716,19 @@ int main(void) {
 			initUARTA1();
 			setReceiveRS485();
 			initVccRS485();
-			__bis_SR_register(GIE);
+//			__bis_SR_register(GIE);
 			enableSlave(s);
 			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
 			disableSlave(s);
-			disableVccRS485();
+//			disableVccRS485();
 			setShoutDownModeRS485();
 			disableUART1();
 
-			sprintf(packet, "%d %d %s\n", c++, s, buffer);
-			for(i=0;i<strlen(packet);i++)
-			{
-				sendByteUARTA0(packet[i]);
-			}
+//			sprintf(packet, "%d %d %s\n", c++, s, buffer);
+//			for(i=0;i<strlen(packet);i++)
+//			{
+//				sendByteUARTA0(packet[i]);
+//			}
 
 
 			// No timeout. Ricevuto dato da Slave.
@@ -737,23 +738,24 @@ int main(void) {
 //				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
 
 
-//				initSPIA0();
-//				radioON();
-//				radioInit();
-//
-//				packet[0]='\0';
+				initSPIA0();
+				radioON();
+				radioInit();
+
+				packet[0]='\0';
 //				sprintf(packet, "%s:%d:%d", buffer, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
-//				PayLoadLenghtSet_Value=strlen(packet);
-//				Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
-//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-//				Packet_Tx(PayLoadLenghtSet_Value, packet);
-//				count_tx++;
-//
-//				__bis_SR_register(LPM0_bits + GIE);
-//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-//
-//				radioOFF();
-//				disableSPIA0();
+				sprintf(packet, "%s", buffer);
+				PayLoadLenghtSet_Value=strlen(packet);
+				Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
+				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+				Packet_Tx(PayLoadLenghtSet_Value, packet);
+				count_tx++;
+
+				__bis_SR_register(LPM0_bits + GIE);
+				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+
+				radioOFF();
+				disableSPIA0();
 
 
 //				for(i=0;i<strlen(buffer);i++)
@@ -778,7 +780,7 @@ int main(void) {
 //    			sendByteUARTA0(packet[i]);
 //    		}
 
-			__delay_cycles(1000000);
+			__delay_cycles(100000);
 
 //    		sprintf(packet, "End 2\n");
 //    		for(i=0;i<strlen(packet);i++)
@@ -788,13 +790,12 @@ int main(void) {
 
 		}
 
-    	__delay_cycles(1000000);
-    	__delay_cycles(1000000);
-    	__delay_cycles(1000000);
-    	__delay_cycles(1000000);
+//    	__delay_cycles(1000000);
+//    	__delay_cycles(1000000);
 
-//		startRTC();
-//    	__bis_SR_register(LPM3_bits + GIE);
+
+		startRTC();
+    	__bis_SR_register(LPM3_bits + GIE);
 
 //		 ***** BOARD SUPERFICE - FINE *****
 
