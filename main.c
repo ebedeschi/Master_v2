@@ -51,8 +51,8 @@
 #define PACKET_LENGHT	40
 #define BUFFER_LENGHT	40
 #define MAXSLAVE	3
-#define TIMEOUTSLAVE	150
-#define RTCSECONDS	60
+#define TIMEOUTSLAVE	2
+#define RTCSECONDS	300
 
 	Modem_Config1 Modem_Config1_Struct;
 	Modem_Config2 Modem_Config2_Struct;
@@ -67,6 +67,7 @@ int Packet_Snr,Packet_Rssi,Rssi_Value,Packet_Count,Modem_Status;
 unsigned char ch;
 u8 timeout_slave = 0;
 u8 ok_slave = 0;
+unsigned long c_timeout=0;
 unsigned long second = 0;
 
 /**
@@ -480,7 +481,6 @@ void initRadioGPIO()
 
 void enableSlave(int slave)
 {
-	timeout_slave = 0;
 	ok_slave = 0;
 	if(slave == 1)
 	{
@@ -494,10 +494,12 @@ void enableSlave(int slave)
 	{
 		P3OUT &= ~BIT6;
 	}
-//	// Inizializzazione del timer per timeout
-//	TA0CCTL0 = CCIE;                    // TACCR0 interrupt enabled
-//	TA0CCR0 = 62500 - 1;
-//	TA0CTL = TASSEL__ACLK | MC__CONTINUOUS;   // SMCLK, continuous mode
+	c_timeout=0;
+	timeout_slave = 0;
+	// Inizializzazione del timer per timeout
+	TA0CCTL0 = CCIE;                    // TACCR0 interrupt enabled
+	TA0CCR0 = 62500 - 1;
+	TA0CTL = TASSEL__ACLK | MC__CONTINUOUS;   // SMCLK, continuous mode
 }
 
 void disableSlave(int slave)
@@ -514,7 +516,7 @@ void disableSlave(int slave)
 	{
 		P3OUT |= BIT6;
 	}
-//	TA0CTL = MC__STOP;
+	TA0CTL = MC__STOP;
 }
 
 void initRTC()
@@ -573,7 +575,6 @@ char buffer[BUFFER_LENGHT+1];
 int i=0, c=0;
 unsigned long count_tx=0;
 unsigned long count_tx_irq=0;
-unsigned long c_timeout=0;
 
 
 int main(void) {
@@ -621,7 +622,6 @@ int main(void) {
 //	initUARTA1();
 
 
-
 //	// Enable interrupts
 //	__bis_SR_register(GIE);
 
@@ -662,7 +662,6 @@ int main(void) {
 //			second = 0;
 //		else
 //			second+= start;
-////		start = 0;
 //
 //    	gpioInit();
 //    	initSPIA0();
@@ -736,10 +735,6 @@ int main(void) {
 				disableSPIA0();
 
 			}
-			else
-			{
-
-			}
 
 		}
 
@@ -811,10 +806,6 @@ __interrupt void Port_4(void)
 #pragma vector = TIMER0_A0_VECTOR
 __interrupt void Timer0_A0_ISR(void)
 {
-	if(ok_slave == 1)
-	{
-		c_timeout = TIMEOUTSLAVE;
-	}
 	if (++c_timeout >= TIMEOUTSLAVE) {
 		c_timeout=0;
 		timeout_slave = 1;
