@@ -52,7 +52,8 @@
 #define BUFFER_LENGHT	40
 #define MAXSLAVE	3
 #define TIMEOUTSLAVE	2
-#define RTCSECONDS	300
+#define RTCSECONDS_START	15
+#define RTCSECONDS_AFTER	900
 
 	Modem_Config1 Modem_Config1_Struct;
 	Modem_Config2 Modem_Config2_Struct;
@@ -69,6 +70,8 @@ u8 timeout_slave = 0;
 u8 ok_slave = 0;
 unsigned long c_timeout=0;
 unsigned long second = 0;
+unsigned long rtc_seconds = 0;
+unsigned long count = 0;
 
 /**
  * Initialize UCA0 module in UART mode with boud rate 9600
@@ -580,6 +583,7 @@ unsigned long count_tx_irq=0;
 int main(void) {
 	WDTCTL = WDTPW | WDTHOLD;       // Stop WDT
 
+	rtc_seconds = RTCSECONDS_START;
 //	__delay_cycles(1000000);
 
 	initVccRS485();
@@ -627,7 +631,7 @@ int main(void) {
 
 	initRTC();
 	stopRTC();
-	second = RTCSECONDS - 10;
+	second = rtc_seconds - 10;
 
 //	setReceiveRS485();
 //
@@ -644,7 +648,6 @@ int main(void) {
 //	__bis_SR_register(LPM3_bits + GIE);
 
     for(;;) {
-
 		// ***** STAND-ALONE - START *****
 //
 //    	stopRTC();
@@ -692,6 +695,9 @@ int main(void) {
 
 		// ***** BOARD SUPERFICE - START *****
     	stopRTC();
+
+    	if(count>120)
+    			rtc_seconds = RTCSECONDS_AFTER;
 
     	int s = 1;
     	for(s=1;s<=3;s++)
@@ -853,8 +859,9 @@ __interrupt void RTC_ISR(void)
         case RTCIV_NONE:      break;        // No interrupts
         case RTCIV_RTCOFIFG:  break;        // RTCOFIFG
         case RTCIV_RTCRDYIFG:               // RTCRDYIFG
-        	if(++second>=RTCSECONDS)
+        	if(++second>=rtc_seconds)
         	{
+            	count++;
 //                P3OUT ^= BIT7;                  // Toggles P1.0 every second
         		second = 0;
         		__bic_SR_register_on_exit(LPM3_bits); 	// Exit LPM3
