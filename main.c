@@ -53,7 +53,7 @@
 #define MAXSLAVE	3
 #define TIMEOUTSLAVE	2
 #define RTCSECONDS_START	15
-#define RTCSECONDS_AFTER	900
+#define RTCSECONDS_AFTER	15
 
 	Modem_Config1 Modem_Config1_Struct;
 	Modem_Config2 Modem_Config2_Struct;
@@ -649,111 +649,109 @@ int main(void) {
 
     for(;;) {
 		// ***** STAND-ALONE - START *****
-//
-//    	stopRTC();
-//
-//    	initI2CB0();
-//		// Read Temperature
+
+    	stopRTC();
+
+    	initI2CB0();
+		// Read Temperature
 //		SHT21ReadTemperature();
-//		g_temp = g_temp;
-//		disableI2CB0();
-//
-//		// random start delay for next
-//		int start = ((float)g_temp - (int)g_temp) * 1000;
-//		start &= 0x07;
-//		if(start<0 || start >9)
-//			second = 0;
-//		else
-//			second+= start;
-//
-//    	gpioInit();
-//    	initSPIA0();
-//    	radioON();
-//    	radioInit();
-//
-//		packet[0]='\0';
-//		sprintf(packet, "T4:%.2f:%d:%d", g_temp, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
-//		//		sprintf(packet, "T3:%.2f", g_temp);
-//		PayLoadLenghtSet_Value=strlen(packet);
-//		Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
-//		P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-//		Packet_Tx(PayLoadLenghtSet_Value, packet);
-//    	count_tx++;
-//
-//    	__bis_SR_register(LPM0_bits + GIE);
-//    	P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-//
-//    	radioOFF();
-//    	disableSPIA0();
-//    	gpioLowPower();
-//
-//    	startRTC();
-//    	__bis_SR_register(LPM3_bits + GIE);
+		g_temp = g_temp;
+		disableI2CB0();
+
+		// random start delay for next
+		int start = ((float)g_temp - (int)g_temp) * 1000;
+		start &= 0x07;
+		if(start<0 || start >9)
+			second = 0;
+		else
+			second+= start;
+
+		initSPIA0();
+    	radioON();
+    	radioInit();
+
+		packet[0]='\0';
+		sprintf(packet, "T5:%.2f:%d:%d", g_temp, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
+		//		sprintf(packet, "T3:%.2f", g_temp);
+		PayLoadLenghtSet_Value=strlen(packet);
+		Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
+		P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+		Packet_Tx(PayLoadLenghtSet_Value, packet);
+    	count_tx++;
+
+    	__bis_SR_register(LPM0_bits + GIE);
+    	P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+
+    	radioOFF();
+    	disableSPIA0();
+
+    	startRTC();
+    	__bis_SR_register(LPM3_bits + GIE);
     	// ***** STAND-ALONE - FINE *****
 
 
 
 		// ***** BOARD SUPERFICE - START *****
-    	stopRTC();
-
-    	if(count>120)
-    			rtc_seconds = RTCSECONDS_AFTER;
-
-    	int s = 1;
-    	for(s=1;s<=3;s++)
-		{
-
-			memset(buffer, 0, BUFFER_LENGHT);
-			memset(packet, 0, PACKET_LENGHT);
-			initUARTA1();
-			setReceiveRS485();
-			initVccRS485();
-//			__bis_SR_register(GIE);
-			enableSlave(s);
-			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
-			disableSlave(s);
-			disableVccRS485();
-			setShoutDownModeRS485();
-			disableUART1();
-
-
-			// No timeout. Ricevuto dato da Slave.
-			if(timeout_slave == 0 && ok_slave == 1)
-			{
-
-				initSPIA0();
-				radioON();
-				radioInit();
-
-				packet[0]='\0';
-				sprintf(packet, "%s:%d:%d", buffer, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
-//				sprintf(packet, "%s", buffer);
-				PayLoadLenghtSet_Value=strlen(packet);
-				Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
-//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-				Packet_Tx(PayLoadLenghtSet_Value, packet);
-				count_tx++;
-
-				__bis_SR_register(LPM0_bits + GIE);
-//				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
-
-				radioOFF();
-				disableSPIA0();
-
-			}
-
-		}
-
-//    	__delay_cycles(1000000);
-//    	__delay_cycles(1000000);
-
-
-//    	disableVccRS485();
-//    	setShoutDownModeRS485();
-//    	disableUART1();
-
-		startRTC();
-    	__bis_SR_register(LPM3_bits + GIE);
+//    	stopRTC();
+//
+//    	if(count>120)
+//    			rtc_seconds = RTCSECONDS_AFTER;
+//
+//    	int s = 1;
+//    	for(s=1;s<=3;s++)
+//		{
+//
+//			memset(buffer, 0, BUFFER_LENGHT);
+//			memset(packet, 0, PACKET_LENGHT);
+//			initUARTA1();
+//			setReceiveRS485();
+//			initVccRS485();
+////			__bis_SR_register(GIE);
+//			enableSlave(s);
+//			__bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
+//			disableSlave(s);
+//			disableVccRS485();
+//			setShoutDownModeRS485();
+//			disableUART1();
+//
+//
+//			// No timeout. Ricevuto dato da Slave.
+//			if(timeout_slave == 0 && ok_slave == 1)
+//			{
+//
+//				initSPIA0();
+//				radioON();
+//				radioInit();
+//
+//				packet[0]='\0';
+//				sprintf(packet, "%s:%d:%d", buffer, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
+////				sprintf(packet, "%s", buffer);
+//				PayLoadLenghtSet_Value=strlen(packet);
+//				Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
+////				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//				Packet_Tx(PayLoadLenghtSet_Value, packet);
+//				count_tx++;
+//
+//				__bis_SR_register(LPM0_bits + GIE);
+////				P3OUT ^= BIT7;                      // Toggle P3.7 using exclusive-OR
+//
+//				radioOFF();
+//				disableSPIA0();
+//
+//			}
+//
+//		}
+//
+////    	__delay_cycles(1000000);
+////    	__delay_cycles(1000000);
+//
+//
+////    	disableVccRS485();
+////    	setShoutDownModeRS485();
+////    	disableUART1();
+//
+//		startRTC();
+//    	__bis_SR_register(LPM3_bits + GIE);
 
 //		 ***** BOARD SUPERFICE - FINE *****
 
