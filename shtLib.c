@@ -108,6 +108,8 @@ void SHT21ReadHumidity(void){
 //
 //	__bis_SR_register(LPM3_bits);       // Enter LPM3 w/ interrupt
 
+	__delay_cycles(900000);
+
 	// Start transfer
 	UCB0CTL1 |= UCTXSTT;
 	while(UCB0CTLW0 & UCTXSTT);             // Wait for ready

@@ -52,8 +52,8 @@
 #define BUFFER_LENGHT	40
 #define MAXSLAVE	3
 #define TIMEOUTSLAVE	2
-#define RTCSECONDS_START	15
-#define RTCSECONDS_AFTER	15
+#define RTCSECONDS_START	20
+#define RTCSECONDS_AFTER	1800
 
 	Modem_Config1 Modem_Config1_Struct;
 	Modem_Config2 Modem_Config2_Struct;
@@ -578,7 +578,7 @@ char buffer[BUFFER_LENGHT+1];
 int i=0, c=0;
 unsigned long count_tx=0;
 unsigned long count_tx_irq=0;
-
+u8 toh = 1;
 
 int main(void) {
 	WDTCTL = WDTPW | WDTHOLD;       // Stop WDT
@@ -652,26 +652,36 @@ int main(void) {
 
     	stopRTC();
 
+    	if(count>200)
+    			rtc_seconds = RTCSECONDS_AFTER;
+
     	initI2CB0();
-		// Read Temperature
-//		SHT21ReadTemperature();
+    	if(toh)
+    		// Read Temperature
+    		SHT21ReadTemperature();
+    	else
+    		SHT21ReadHumidity();
 		g_temp = g_temp;
+		g_hum = g_hum;
 		disableI2CB0();
 
-		// random start delay for next
-		int start = ((float)g_temp - (int)g_temp) * 1000;
-		start &= 0x07;
-		if(start<0 || start >9)
-			second = 0;
-		else
-			second+= start;
+//		// random start delay for next
+//		int start = ((float)g_temp - (int)g_temp) * 1000;
+//		start &= 0x07;
+//		if(start<0 || start >9)
+//			second = 0;
+//		else
+//			second+= start;
 
 		initSPIA0();
     	radioON();
     	radioInit();
 
 		packet[0]='\0';
-		sprintf(packet, "T5:%.2f:%d:%d", g_temp, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
+    	if(toh)
+    		sprintf(packet, "T5:%.2f:%d:%d", g_temp, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
+    	else
+    		sprintf(packet, "H5:%.2f:%d:%d", g_hum, (Pa_Config_Struct.PaSelect==PaSelect_PA_Boost_Pin)?1:0, Pa_Config_Struct.OutputPower);
 		//		sprintf(packet, "T3:%.2f", g_temp);
 		PayLoadLenghtSet_Value=strlen(packet);
 		Packet_Set(PreambleLenghtSet_Value,PayLoadLenghtSet_Value);
@@ -684,6 +694,8 @@ int main(void) {
 
     	radioOFF();
     	disableSPIA0();
+
+    	toh=!toh;
 
     	startRTC();
     	__bis_SR_register(LPM3_bits + GIE);
